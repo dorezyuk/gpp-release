@@ -1,0 +1,12 @@
+Source: ros-noetic-gpp-update-map
+Section: misc
+Priority: optional
+Maintainer: Dima Dorezyuk <dmitrij.dorezyuk@hotmail.de>
+Build-Depends: debhelper (>= 9.0.0), ros-noetic-catkin, ros-noetic-gpp-interface, ros-noetic-pluginlib
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-noetic-gpp-update-map
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-noetic-gpp-interface, ros-noetic-pluginlib
+Description: The gpp_update_map plugin will update the map before running the global planner
