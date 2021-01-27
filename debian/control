@@ -1,0 +1,12 @@
+Source: ros-noetic-gpp-plugin
+Section: misc
+Priority: optional
+Maintainer: Dima Dorezyuk <dmitrij.dorezyuk@hotmail.de>
+Build-Depends: debhelper (>= 9.0.0), ros-noetic-catkin, ros-noetic-costmap-2d, ros-noetic-global-planner, ros-noetic-gpp-interface, ros-noetic-mbf-costmap-core, ros-noetic-mbf-costmap-nav, ros-noetic-mbf-msgs, ros-noetic-move-base, ros-noetic-nav-core, ros-noetic-pluginlib, ros-noetic-rostest, ros-noetic-xmlrpcpp
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-noetic-gpp-plugin
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-noetic-costmap-2d, ros-noetic-gpp-interface, ros-noetic-mbf-costmap-core, ros-noetic-mbf-msgs, ros-noetic-nav-core, ros-noetic-pluginlib, ros-noetic-xmlrpcpp
+Description: The gpp_plugin package offers a pipeline for running global planners together with auxiliary pre- and post-processing functions
