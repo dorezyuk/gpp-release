@@ -1,48 +1,41 @@
-# GlobalPlannerPipeline
+# GppPrunePath
 
-The GlobalPlannerPipeline (gpp) is a [pluginlib](http://wiki.ros.org/pluginlib) based "pipeline" for global planning within the [ros-navigation](https://github.com/ros-planning/navigation)-stack.
+The GppPrunePath is a demo plugin, which reduces the number of elements within a path produced by a global planner.
 
-## Core Features
+## Behavior
 
-The library allows you to
-- pre-process the inputs for your global planners,
-- chain multiple global planners together,
-- post-process the output form the global planners.
+The input path must contain at least two poses.
+If the path is shorter, the plugin will fail.
+The output will always contain the first and the last pose of the input path.
+The intermediate poses will be pruned.
 
-The goal is to separate auxiliary functions from the implementation of the global planners.
-Additionally the library allows you to create a "planner-chain" - a feature successfully used in the [moveit](https://moveit.ros.org/) framework.
+## Config
 
-The project consists of two components.
-The [gpp_interface](gpp_interface) defines two additional plugin-types: PrePlanning and PostPlanning plugins.
-The [gpp_plugin](gpp_plugin) implements the pipeline which will load and run these pre- and post-planning plugins together with global-planner plugins.
+### ~\<name>\/step (int, 2)
 
-## Concept
-Before going into the details how to use and configure this library, we will first define some terminology.
+Defined how many poses to skip.
+Setting this value to N means that your output will contain every Nth value.
+Setting this value to 3 for example, will skip two poses.
+An input sequence of [1, 2, 3, 4, 5, 6, 7, 8...] would become [1, 4, 7, ...].
+Values smaller than 2 will deactivate the pruning.
 
-Since the naming may be already confusing (plugins, plugins, plugins), we will refer to the plugins loaded by the GppPlugin as its *child-plugins*.   
-Those child-plugins are *grouped* together accordingly to their interfaces.
-The pre-planning group contains child-plugins implementing the [gpp_interface::PrePlanningInterface](gpp_interface/src/gpp_interface/pre_planning_interface.hpp);
-The post-planning group contains child-plugins implementing the [gpp_interface::PostPlanningInterface](gpp_interface/src/gpp_interface/post_planning_interface.hpp);
-The planning group accepts child-plugins implementing  either the [nav_core::BaseGlobalPlanner](http://wiki.ros.org/nav_core?distro=noetic#BaseGlobalPlanner_C.2B-.2B-_API) or [mbf_costmap_core::CostmapPlanner](https://github.com/magazino/move_base_flex/blob/master/mbf_costmap_core/include/mbf_costmap_core/costmap_planner.h) interfaces.
+Below an example how to configure this plugin
 
-![image](docs/schematic.svg)
+```yaml
+# this is for move-base-flex.
+# activate the GppPlugin
+plugins:
+    - {name: gpp_plugin, type: gpp_plugin::GppPlugin}
 
-The pipeline concept is illustrated above.
-When calling `GppPlugin::makePlan`, the GppPlugin will invoke its child-plugins.
-The execution of those child-plugins is sequentially, going from the pre- over the planning- to the post-planning group.
-The result from each child-plugin is passed on the the next.
+# configure the gpp_plugin to use gpp_prune_path
+gpp_plugin:
+    # define the pre_planning and planning groups...
+    # define the post_planning group:
+    post_planning:
+        - {name: gpp_prune_path, type: gpp_prune_path::GppPrunePath, on_failure_break: true}
+    post_planning_default_value: True
 
-Read on what you can do with the two [additional interfaces](gpp_interface), or how to configure the [GppPlugin](gpp_plugin).
-Additionally have a look at the two example-plugins: [GppUpdateMap](examples/gpp_update_map) and [GppPrunePath](examples/gpp_prune_path).
-
-## Build
-
-The build-step is very similar to the standard ros-packages:
+# configure the gpp_prune_path
+gpp_prune_path:
+    step: 3
 ```
-cd ~catkin_ws/src
-git clone https://github.com/dorezyuk/gpp.git
-catkin build gpp_plugin
-```
-
-## CI-Status
-![build-status](https://github.com/dorezyuk/gpp/workflows/Noetic%20CI/badge.svg)
