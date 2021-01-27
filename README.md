@@ -1,48 +1,30 @@
-# GlobalPlannerPipeline
+# GppUpdateMap
 
-The GlobalPlannerPipeline (gpp) is a [pluginlib](http://wiki.ros.org/pluginlib) based "pipeline" for global planning within the [ros-navigation](https://github.com/ros-planning/navigation)-stack.
+This package will update the map as a pre-planning action.
+This allows you to implement "lazy" map-updates - re-rendering your global-costmap only when its required (before your planning).
 
-## Core Features
+## Behavior
 
-The library allows you to
-- pre-process the inputs for your global planners,
-- chain multiple global planners together,
-- post-process the output form the global planners.
+This simple plugin only fails, if its `preProcess` function has been called before initializing it with a valid `costmap_2d::Costmap2DROS`.
 
-The goal is to separate auxiliary functions from the implementation of the global planners.
-Additionally the library allows you to create a "planner-chain" - a feature successfully used in the [moveit](https://moveit.ros.org/) framework.
+## Config
 
-The project consists of two components.
-The [gpp_interface](gpp_interface) defines two additional plugin-types: PrePlanning and PostPlanning plugins.
-The [gpp_plugin](gpp_plugin) implements the pipeline which will load and run these pre- and post-planning plugins together with global-planner plugins.
+The package does not require any configuration.
+In order to activate it, add following into your GppPlugin-config:
 
-## Concept
-Before going into the details how to use and configure this library, we will first define some terminology.
+```yaml
 
-Since the naming may be already confusing (plugins, plugins, plugins), we will refer to the plugins loaded by the GppPlugin as its *child-plugins*.   
-Those child-plugins are *grouped* together accordingly to their interfaces.
-The pre-planning group contains child-plugins implementing the [gpp_interface::PrePlanningInterface](gpp_interface/src/gpp_interface/pre_planning_interface.hpp);
-The post-planning group contains child-plugins implementing the [gpp_interface::PostPlanningInterface](gpp_interface/src/gpp_interface/post_planning_interface.hpp);
-The planning group accepts child-plugins implementing  either the [nav_core::BaseGlobalPlanner](http://wiki.ros.org/nav_core?distro=noetic#BaseGlobalPlanner_C.2B-.2B-_API) or [mbf_costmap_core::CostmapPlanner](https://github.com/magazino/move_base_flex/blob/master/mbf_costmap_core/include/mbf_costmap_core/costmap_planner.h) interfaces.
+# the gpp-plugin definition in your move-base-flex
+planners:
+    -{ name: gpp, type: gpp_plugin::GppPlugin }
 
-![image](docs/schematic.svg)
+gpp:
+    pre_planning:
+        - {name: gpp_update_map, type: gpp_update_map::GppUpdateMap, on_failure_break: false}
+    pre_planning_default_value: true
+    # ... now continue with your planning and post_planning definitions
 
-The pipeline concept is illustrated above.
-When calling `GppPlugin::makePlan`, the GppPlugin will invoke its child-plugins.
-The execution of those child-plugins is sequentially, going from the pre- over the planning- to the post-planning group.
-The result from each child-plugin is passed on the the next.
-
-Read on what you can do with the two [additional interfaces](gpp_interface), or how to configure the [GppPlugin](gpp_plugin).
-Additionally have a look at the two example-plugins: [GppUpdateMap](examples/gpp_update_map) and [GppPrunePath](examples/gpp_prune_path).
-
-## Build
-
-The build-step is very similar to the standard ros-packages:
+# since we are always updating the costmap before plannig we may reduce the global-costmap update-frequency. You cannot set the update-frequency to zero however, until https://github.com/ros-planning/navigation/pull/1072 is released.
+global_costmap:
+    update_frequency: 0.5
 ```
-cd ~catkin_ws/src
-git clone https://github.com/dorezyuk/gpp.git
-catkin build gpp_plugin
-```
-
-## CI-Status
-![build-status](https://github.com/dorezyuk/gpp/workflows/Noetic%20CI/badge.svg)
